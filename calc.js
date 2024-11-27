@@ -1,104 +1,202 @@
-const buttons = document.getElementsByClassName("buttons");
-const display = document.getElementById("display");
+class Calculator {
+    currentDisplay = '';
+    currentValue = '';
+    prevValue = '';
+    hasDecimal = false;
+    operator = '';
+    resetDisplay = false;
 
-let currentNum = "";
-let output = "";
-let value1 = 0;
-let value2 = 0;
+    addToDisplay(string) {
+        if (this.resetDisplay) {
+            // Clear the display if we just displayed a result
+            this.currentDisplay = '';
+            this.resetDisplay = false; // Reset the flag
+        }
+        this.currentDisplay += string;
+        this.updateDisplay();
+    }
 
-for (const elements of buttons) {
-    elements.addEventListener("click", e => {
-        if (elements.className === "buttons number") {
-            // numbers
-            switch (elements.id) {
-                case "neg":
-                    negate();
-                    break;
+    updateDisplay() {
+        display.innerText = this.currentDisplay;
+    }
 
-                case "dec":
-                    decimal();
-                    break;
+    clear() {
+        this.currentDisplay = '';
+        this.updateDisplay();
+    }
 
-                case "clear":
-                    clear();
-                    break
-
-                default:
-                    addToDisplay(elements.innerHTML);
-                    break;
-            }
-
-            if (currentNum.includes(".")) {
-                // float 
-                currentValue = parseFloat(currentNum);
-                console.log(currentValue);
-
+    decimal() {
+        if (!this.currentDisplay.includes(".")) {
+            this.hasDecimal = true;
+            if (this.currentDisplay === '') {
+                this.addToDisplay("0.");
             } else {
-                currentValue = parseInt(currentNum);
-                console.log(currentValue);
-            }
-
-            console.log("Current: " + currentValue + typeof(currentValue));
-
-
-
-        } else if (elements.className === "buttons operator") {
-            let result = 0;
-            addToMemory(e);
-            if (memory.length === 2) {
-                operate(memory, elements.id);
+                this.addToDisplay(".");
             }
         }
     }
-    )
-}
 
-function addToDisplay(e) {
-    currentNum += e;
-    display.innerText = currentNum;
-}
-
-function clear() {
-    currentNum = "";
-    currentValue = 0;
-    memory = new Array();
-    display.innerText = "";
-}
-
-function negate() {
-    if (currentNum.includes("-")) {
-        currentNum = currentNum.substring(1, currentNum.length);
-    } else {
-        currentNum = "-" + currentNum;
+    negate() {
+        if (this.currentDisplay.includes("-")) {
+            this.currentDisplay = this.currentDisplay.substring(1, this.currentDisplay.length);
+        } else {
+            this.currentDisplay = "-" + this.currentDisplay;
+        }
+        this.updateDisplay();
     }
-    display.innerText = currentNum;
-}
 
-function decimal() {
-    if (currentNum.includes("."))
-        currentNum;
-    else {
-        currentNum += "."
+    saveValue() {
+        this.prevValue = this.toNumber(this.currentDisplay);
+        this.clear();
     }
-    display.innerText = currentNum;
+
+    toNumber(string) {
+        let number;
+        if (this.hasDecimal) {
+            number = parseFloat(string);
+        } else {
+            number = parseInt(string);
+        }
+
+        return number;
+    }
+
+    setOperator(operatorID) {
+        if (this.currentDisplay === '' && this.prevValue === ''){
+            console.log('ERRE');
+            return;
+
+        }
+        if (this.currentDisplay === '' && this.operator != ''){
+            console.log('ERRE');
+            return;
+        }
+
+
+
+        if (this.prevValue != '') {
+            console.log("Here!");
+            this.operate();
+            this.operator = operatorID;
+            
+        } else {
+            this.operator = operatorID;
+            this.saveValue();
+        }
+    }
+
+    operate() {
+        if (this.operator === ''){
+            console.log("NO operator")
+            return
+        }
+
+        let result;
+        this.currentValue = this.toNumber(this.currentDisplay);
+        console.log(this.prevValue, this.currentValue, this.operator);
+        switch (this.operator) {
+            case "plus":
+                result = this.plus(this.prevValue, this.currentValue);
+                break;
+            case "minus":
+                result = this.minus(this.prevValue, this.currentValue);
+                break;
+            case "multiply":
+                result = this.multiply(this.prevValue, this.currentValue);
+                break;
+            case "divide":
+                result = this.divide(this.prevValue, this.currentValue);
+                break;
+            case "power":
+                result = this.power(this.prevValue, this.currentValue);
+                break;
+            case "mod":
+                result = this.modulo(this.prevValue, this.currentValue);
+                break
+            default:
+                console.log("?????")
+                break
+
+        }
+
+        console.log("Result: " + result);
+        if (result.toString().includes(".")) {
+            this.hasDecimal = true;
+        }
+
+        this.prevValue = result;        
+        this.clear();
+        this.addToDisplay(result);
+        this.operator = '';
+        this.resetDisplay = true
+        console.log(this.prevValue, this.currentValue, this.operator);
+        
+    }
+
+    plus(x, y) {
+        return x + y;
+    }
+
+    minus(x, y) {
+        return x - y;
+    }
+    multiply(x, y) {
+        return x * y;
+    }
+    divide(x, y) {
+        return x / y;
+    }
+
+    power(x, y) {
+        return x ** y;
+    }
+
+    modulo(x, y) {
+        return x % y;
+    }
 }
 
-function add(x, y){
-    return x + y;
+const numbers = document.getElementsByClassName("buttons number");
+const operators = document.getElementsByClassName("buttons operator");
+const special = document.getElementsByClassName("buttons special");
+const equal = document.getElementById("equal");
+const display = document.getElementById("display");
+
+let myCalc = new Calculator();
+
+for (let number of numbers) {
+    number.addEventListener("click", e => {
+        console.log("Inputted: " + number.innerText);
+        myCalc.addToDisplay(number.innerText);
+    })
 }
 
-function subtract(x, y){
-    return x - y;
+for (let operator of operators) {
+    operator.addEventListener("click", e => {
+        myCalc.setOperator(operator.id);
+    })
 }
 
-function multiply(x, y){
-    return x * y;
-}
-
-function divide(x, y){
-    return x / y;
-}
-
-function displayResult(e) {
-    display.innerHTML = e;
+for (let element of special) {
+    element.addEventListener("click", e => {
+        console.log(e);
+        switch (element.id) {
+            case "neg":
+                myCalc.negate();
+                break;
+            case "clear":
+                myCalc.currentValue = '';
+                myCalc.prevValue = '';
+                myCalc.operator = '';
+                myCalc.hasDecimal = false;
+                myCalc.clear();
+                break;
+            case "dec":
+                myCalc.decimal();
+                break;
+            case "equal":
+                myCalc.operate();
+                break;
+        }
+    })
 }
